@@ -41,10 +41,10 @@ class Generator(torch.nn.Module):
     def forward(self, input):
         l1 = self.fc1(input)
         l1 = l1.view(-1, self.initial_feature_size, 3, 3) # reshape
-        l1 = torch.nn.functional.leaky_relu(self.bn1(l1), negative_slope=self.alpha)
+        l1 = torch.nn.functional.relu(self.bn1(l1) )#, negative_slope=self.alpha)
 
-        l2 = torch.nn.functional.leaky_relu(self.bn2(self.deconv2(l1)), negative_slope=self.alpha)
-        l3 = torch.nn.functional.leaky_relu(self.bn3(self.deconv3(l2)), negative_slope=self.alpha)
+        l2 = torch.nn.functional.relu(self.bn2(self.deconv2(l1)) )#, negative_slope=self.alpha)
+        l3 = torch.nn.functional.relu(self.bn3(self.deconv3(l2)) )#, negative_slope=self.alpha)
         l4 = self.deconv4(l3)
         out = torch.tanh(l4)
 
@@ -90,8 +90,8 @@ def save_generator_output(G, fixed_z, img_str, title):
     n_rows = np.sqrt(n_images).astype(np.int32)
     n_cols = np.sqrt(n_images).astype(np.int32)
 
-    z_ = fixed_z
-    # z_ = fixed_z.cuda()
+    # z_ = fixed_z
+    z_ = fixed_z.cuda()
     samples = G(z_)
     samples = samples.cpu().data.numpy()
 
@@ -117,7 +117,7 @@ z_size = 100
 # n_classes = 10
 epochs = 30
 batch_size = 64
-learning_rate = 0.0002
+learning_rate = 0.0004
 alpha = 0.2
 beta1 = 0.5
 print_every = 50
@@ -134,8 +134,8 @@ train_loader = torch.utils.data.DataLoader(
 # build network
 G = Generator(z_size, n_output_channel=image_channels, alpha=alpha)
 D = Discriminator(x_size, n_output=1, alpha=alpha)
-# G.cuda()
-# D.cuda()
+G.cuda()
+D.cuda()
 
 # optimizer
 BCE_loss = torch.nn.BCELoss()
@@ -167,11 +167,11 @@ for e in range(epochs):
         current_batch_size = x_.size()[0]
 
         # create labels for loss computation
-        y_real_ = torch.ones(current_batch_size, requires_grad=False)
-        y_fake_ = torch.zeros(current_batch_size, requires_grad=False)
+        y_real_ = torch.ones((current_batch_size,1), requires_grad=False)
+        y_fake_ = torch.zeros((current_batch_size,1), requires_grad=False)
 
         # make it cuda Tensor
-        # x_, y_real_, y_fake_ = x_.cuda(), y_real_.cuda(), y_fake_.cuda())
+        x_, y_real_, y_fake_ = x_.cuda(), y_real_.cuda(), y_fake_.cuda()
 
         # run real input on Discriminator
         D_result_real = D(x_)
@@ -179,7 +179,7 @@ for e in range(epochs):
 
         # run Generator input on Discriminator
         z1_ = torch.Tensor(current_batch_size, z_size).uniform_(-1, 1)
-        # z1_ = z1_.cuda()
+        z1_ = z1_.cuda()
         x_fake = G(z1_)
         D_result_fake = D(x_fake)
         D_loss_fake = BCE_loss(D_result_fake, y_fake_)
@@ -195,8 +195,8 @@ for e in range(epochs):
         Train in Generator
         '''
         z2_ = torch.Tensor(current_batch_size, z_size).uniform_(-1, 1)
-        y_ = torch.ones(current_batch_size)
-        # z2_, y_ = z2_.cuda(), y_.cuda()
+        y_ = torch.ones((current_batch_size,1))
+        z2_, y_ = z2_.cuda(), y_.cuda()
         G_result = G(z2_)
         D_result_fake2 = D(G_result)
         G_loss = BCE_loss(D_result_fake2, y_)
