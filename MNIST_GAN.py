@@ -116,7 +116,7 @@ z_size = 100
 # n_hidden = 128
 # n_classes = 10
 epochs = 30
-batch_size = 64
+batch_size = 1024
 learning_rate = 0.0004
 alpha = 0.2
 beta1 = 0.5
@@ -210,9 +210,10 @@ for e in range(epochs):
             loss_G =  float(G_loss.detach())
             losses.append((loss_D,loss_G))
 
-            print("Epoch {}/{}...".format(e+1, epochs),
+            print("\rEpoch {}/{}...".format(e+1, epochs),
                 "Discriminator Loss: {:.4f}...".format(loss_D),
-                "Generator Loss: {:.4f}".format(loss_G))
+                "Generator Loss: {:.4f}".format(loss_G), end=' ')
+    print("")
     # Sample from generator as we're training for viewing afterwards
     image_fn = './assets/epoch_{:d}_pytorch.png'.format(e)
     image_title = 'epoch {:d}'.format(e)
