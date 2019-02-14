@@ -8,35 +8,6 @@ from training import Trainer
 from dataloaders import get_mnist_dataloaders
 from torchvision import transforms, utils
 
-img_size = (256, 256, 3)
-# img_size = (32, 32, 1)
-generator = Generator(img_size=img_size, latent_dim=100, dim=16)
-discriminator = Discriminator(img_size=img_size, dim=16)
-
-lr = 1e-4
-betas = (.9, .99)
-# Initialize optimizers
-G_optimizer = torch.optim.Adam(generator.parameters(), lr=lr, betas=betas)
-D_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr, betas=betas)
-
-
-
-nature_dataset = NatureDataset('dataset', transform=transforms.Compose([ToTensor()]))
-
-#nature_dataset.get_sample_data()
-
-data_loader = DataLoader(nature_dataset, batch_size=256, shuffle=True, num_workers=4)
-
-#data_loader, _ = get_mnist_dataloaders(batch_size=512)
-
-# Set up trainer
-trainer = Trainer(generator, discriminator, G_optimizer, D_optimizer,
-                  use_cuda=torch.cuda.is_available())
-
-# Train model for X epochs
-trainer.train(data_loader, epochs=100, save_training_gif=True)
-
-
 class NatureDataset(Dataset):
     
     def __init__(self, root_dir, transform=None):
@@ -47,7 +18,7 @@ class NatureDataset(Dataset):
         return len(os.listdir(self.root_dir))
     
     def __getitem__(self, idx):
-        print("getting item from dataset")
+        # print("getting item from dataset")
         img_name = os.path.join(self.root_dir,f'img_ ({idx}).jpg')
         image = imageio.imread(img_name)
         sample = image
@@ -72,18 +43,47 @@ class NatureDataset(Dataset):
                 plt.show()
                 break
             
-class ToTensor(object):
-    """Convert ndarrays in sample to Tensors."""
+#class ToTensor(object):
+#    """Convert ndarrays in sample to Tensors."""
+#
+#    def __call__(self, sample):
+#        image = sample
+#
+#        # swap color axis because
+#        # numpy image: H x W x C
+#        # torch image: C X H X W
+#        image = image.transpose((2, 0, 1))
+#        return sample
+        
+        
+img_size = (256, 256, 3)
+# img_size = (32, 32, 1)
+generator = Generator(img_size=img_size, latent_dim=100, dim=16)
+discriminator = Discriminator(img_size=img_size, dim=16)
 
-    def __call__(self, sample):
-        image, label = sample['image'], sample['landmarks']
+lr = 1e-4
+betas = (.9, .99)
+# Initialize optimizers
+G_optimizer = torch.optim.Adam(generator.parameters(), lr=lr, betas=betas)
+D_optimizer = torch.optim.Adam(discriminator.parameters(), lr=lr, betas=betas)
 
-        # swap color axis because
-        # numpy image: H x W x C
-        # torch image: C X H X W
-        image = image.transpose((2, 0, 1))
-        return {'image': torch.from_numpy(image),
-                'landmarks': torch.from_numpy(label)}
+
+
+nature_dataset = NatureDataset('dataset', transform=transforms.ToTensor())
+
+#nature_dataset.get_sample_data()
+
+data_loader = DataLoader(nature_dataset, batch_size=256, shuffle=True, num_workers=0)
+
+#data_loader, _ = get_mnist_dataloaders(batch_size=512)
+
+# Set up trainer
+trainer = Trainer(generator, discriminator, G_optimizer, D_optimizer,
+                  use_cuda=torch.cuda.is_available())
+
+# Train model for X epochs
+trainer.train(data_loader, epochs=100, save_training_gif=True)
+
             
 
 

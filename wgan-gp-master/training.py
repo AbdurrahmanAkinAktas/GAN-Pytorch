@@ -109,7 +109,7 @@ class Trainer():
     def _train_epoch(self, data_loader):
         for i, data in enumerate(data_loader):
             self.num_steps += 1
-            self._critic_train_iteration(data[0])
+            self._critic_train_iteration(data['image'])
             # Only update generator every |critic_iterations| iterations
             if self.num_steps % self.critic_iterations == 0:
                 self._generator_train_iteration(data[0])
